@@ -1,0 +1,30 @@
+{
+	"name": "Doourbest/EsUtils-php",
+	"description": "some php utilities for elasticsearch",
+	"license": "PRIVATE",
+	"require": {
+		"php": ">=5.4.0",
+		"elasticsearch/elasticsearch": "~2.0"
+	},
+	"authors": [
+		{
+			"name": "roxma",
+			"email": "roxma@qq.com"
+		}
+	],
+	"autoload": {
+		"classmap": ["src/"]
+	},
+	"extra": {
+		"branch-alias": {
+			"dev-master": "1.0-dev"
+		}
+	},
+	"repositories": {
+		"packagist": {
+			"type": "composer",
+			"url": "https://packagist.phpcomposer.com"
+		}
+	}
+}
+
