@@ -1,5 +1,5 @@
 {
-	"name": "Doourbest/EsUtils-php",
+	"name": "doourbest/es-utils-php",
 	"description": "some php utilities for elasticsearch",
 	"license": "MIT",
 	"keywords": ["tool", "elasticsearch"],
