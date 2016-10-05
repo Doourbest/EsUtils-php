@@ -2,7 +2,7 @@
 	"name": "doourbest/es-utils-php",
 	"description": "some php utilities for elasticsearch",
 	"license": "MIT",
-	"keywords": ["tool", "elasticsearch"],
+	"keywords": [ "tool", "elasticsearch" ],
 	"require": {
 		"php": ">=5.4.0",
 		"elasticsearch/elasticsearch": "~2.0"
