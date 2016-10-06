@@ -17,6 +17,8 @@ class EsUtils {
      */
     public static function copy($options) {
 
+        gc_enable();
+
         $getOption = function($key,$default=NULL) use (&$options) {
             if(array_key_exists($key,$options)) {
                 return $options[$key];
@@ -66,6 +68,8 @@ class EsUtils {
         while(count($docs['hits']['hits'])!=0) {
 
             if($time+60<=time()) {
+                // force gc
+                gc_collect_cycles();
                 $time=time();
                 self::message("time: [$time] count:[$count]");
             }   
