@@ -4,6 +4,14 @@ use Elasticsearch\ClientBuilder;
 
 class EsUtils {
 
+    static private $verbose;
+
+    private static function message($msg) {
+        if(self::$verbose) {
+            fwrite(STDERR, "$msg\n");
+        }
+    }
+
     /**
      * 把数据从一个 index copy 到另一个 index
      */
@@ -21,12 +29,15 @@ class EsUtils {
         $fromType  = $getOption('fromType');
         $fromHosts = $getOption('fromHosts');
         $query     = $getOption('query',['match_all'=>[]]);
-        $scroll    = $getOption('scroll','600s');
+        $scroll    = $getOption('scroll','60s');
         $batchSize = $getOption('batchSize',1000);
         $toIndex   = $getOption('toIndex');
-        $toType    = $getOption('toType');
-        $toHosts   = $getOption('toHosts');
+        $toType    = $getOption('toType',$fromType);
+        $toHosts   = $getOption('toHosts',[]);
         $transform = $getOption('transform');
+        $verbose   = $getOption('verbose',false);
+
+        self::$verbose = $verbose;
 
         $cli1 = ClientBuilder::create()->setHosts($fromHosts)->build();
         if(count(array_diff($fromHosts,$toHosts))==0 && count(array_diff($toHosts,$fromHosts))==0) {
@@ -50,9 +61,14 @@ class EsUtils {
         ];
 
         $count = 0;
-
+        $time = 0;
         $docs = $cli1->search($params);
         while(count($docs['hits']['hits'])!=0) {
+
+            if($time+60<=time()) {
+                $time=time();
+                self::message("time: [$time] count:[$count]");
+            }   
 
             $scrollId = $docs['_scroll_id'];
 
@@ -95,15 +111,17 @@ class EsUtils {
 }
 
 
-// $options['fromIndex'] = "bigbanglib_wish_index_options_docs"; 
+// require 'vendor/autoload.php';
+// $options['fromIndex'] = "bigbanglib_wish"; 
 // $options['fromType']  = "data"; 
 // $options['fromHosts'] = ["http://10.104.67.229:9201"]; 
 // /* $options['query']     = []; */ 
 // $options['scroll']    = '10s';
 // $options['batchSize'] = 2000;
-// $options['toIndex']   = "test2"; 
+// $options['toIndex']   = "bigbanglib_wish_v2"; 
 // $options['toType']    = "data"; 
 // $options['toHosts']   = []; 
+// $options['verbose']   = true; 
 // $options['transform'] = function(&$index,&$source) {
 //         $index['_id'] = 'abc'.$index['_id'];
 //     };
