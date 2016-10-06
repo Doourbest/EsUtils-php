@@ -84,11 +84,11 @@ class EsUtils {
 
                 // var_dump($hit);
                 $params['body'][] = [
-                    'index' => [
+                    'create' => [
                         '_index' => $toIndex,
                         '_type' => $toType,
                         '_id' => $hit['_id'],
-                    ]
+                    ],
                 ];
 
                 $params['body'][] = $hit['_source'];
@@ -121,13 +121,13 @@ class EsUtils {
 // $options['fromHosts'] = ["http://10.104.67.229:9201"]; 
 // /* $options['query']     = []; */ 
 // $options['scroll']    = '10s';
-// $options['batchSize'] = 2000;
+// $options['batchSize'] = 1000;
 // $options['toIndex']   = "bigbanglib_wish_v2"; 
 // $options['toType']    = "data"; 
 // $options['toHosts']   = []; 
 // $options['verbose']   = true; 
 // $options['transform'] = function(&$index,&$source) {
-//         $index['_id'] = 'abc'.$index['_id'];
+//         // $index['_id'] = 'abc'.$index['_id'];
 //     };
 // 
 // var_dump(EsUtils::copy($options));
