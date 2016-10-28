@@ -37,7 +37,7 @@ class EsUtils {
         $toType    = $getOption('toType',$fromType);
         $toHosts   = $getOption('toHosts',[]);
         $transform = $getOption('transform');
-        $verbose   = $getOption('verbose',false);
+        $verbose   = $getOption('verbose',true);
 
         self::$verbose = $verbose;
 
@@ -82,14 +82,19 @@ class EsUtils {
 
                 ++$count;
 
-                // var_dump($hit);
-                $params['body'][] = [
+                $e = [
                     'create' => [
                         '_index' => $toIndex,
                         '_type' => $toType,
                         '_id' => $hit['_id'],
                     ],
                 ];
+                if(array_key_exists('_routing',$hit)) {
+                    $e['create']['_routing'] = $hit['_routing'];
+                }
+
+                // var_dump($hit);
+                $params['body'][] = $e;
 
                 $params['body'][] = $hit['_source'];
 
@@ -112,18 +117,97 @@ class EsUtils {
 
         return $count;
     }
+
+    /**
+     * 把数据从一个 index copy 到另一个 index
+     */
+    public static function delete($options) {
+
+        gc_enable();
+
+        $getOption = function($key,$default=NULL) use (&$options) {
+            if(array_key_exists($key,$options)) {
+                return $options[$key];
+            } else {
+                return $default;
+            }
+        };
+
+        $index     = $getOption('index');
+        $type      = $getOption('type');
+        $hosts     = $getOption('hosts');
+        $query     = $getOption('query',['match_all' =>[]]);
+        $batchSize = $getOption('batchSize',1000);
+        $verbose   = $getOption('verbose',true);
+
+        self::$verbose = $verbose;
+
+        $client = ClientBuilder::create()->setHosts($hosts)->build();
+
+        $count = 0;
+        $total = 0;
+        $time = 0;
+        while(true) {
+
+            if($time<time()) {
+                // force gc
+                gc_collect_cycles();
+                $time=time();
+                self::message("time: [$time] count:[$count]");
+                $count = 0;
+            }   
+
+            $params = [];
+            $params['index']         = $index;
+            $params['type']          = $type;
+            $params['size']          = $batchSize;
+            $params['fields']        = [];
+            $params['body']          = [];
+            $params['body']['query'] = $query;
+            $ret = $client->search($params);
+            $hits = $ret['hits']['hits'];
+            if(count($hits)==0) {
+                break;
+            }
+            $count += count($hits);
+            $total += count($hits);
+
+            $params = [];
+            $params['body'] = [];
+            foreach($hits as $hit) {
+                $e = [
+                    'delete' => [
+                        '_index' => $index,  
+                        '_type' => $type,  
+                        '_id' => $hit['_id'],
+                    ]
+                ];
+                if(array_key_exists('_routing',$hit)) {
+                    $e['delete']['_routing'] = $hit['_routing'];
+                }
+                $params['body'][] =  $e;
+            }
+
+            $client->bulk($params);
+            $client->indices()->refresh(['index'=>$index]);
+        }
+
+        self::message("time: [$time] total count:[$total]");
+
+        return $count;
+    }
 }
 
 
 // require 'vendor/autoload.php';
-// $options['fromIndex'] = "bigbanglib_wish"; 
-// $options['fromType']  = "data"; 
-// $options['fromHosts'] = ["http://10.104.67.229:9201"]; 
+// $options['fromIndex'] = "my_index"; 
+// $options['fromType']  = "my_type"; 
+// $options['fromHosts'] = ["http://localhost:9201"]; 
 // /* $options['query']     = []; */ 
 // $options['scroll']    = '10s';
 // $options['batchSize'] = 1000;
-// $options['toIndex']   = "bigbanglib_wish_v2"; 
-// $options['toType']    = "data"; 
+// $options['toIndex']   = "my_index2"; 
+// $options['toType']    = "my_type2"; 
 // $options['toHosts']   = []; 
 // $options['verbose']   = true; 
 // $options['transform'] = function(&$index,&$source) {
@@ -132,3 +216,11 @@ class EsUtils {
 // 
 // var_dump(EsUtils::copy($options));
 
+// require 'vendor/autoload.php';
+// $options['index']     = "my_index";
+// $options['type']      = "my_type";
+// $options['hosts']     = ["http://localhost:9200"];
+// $options['batchSize'] = 1;
+// 
+// var_dump(EsUtils::delete($options));
+// 
